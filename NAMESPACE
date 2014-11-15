@@ -1,0 +1,6 @@
+#exportPattern("^[[:alpha:]]+")
+import(ggplot2)
+import(MASS)
+useDynLib(ChangePointCalc)
+export(SynthesizeData)
+export(DPmain, DPPlotChangePoint, DPPlotL1Norm, SGL, SGLPlotChangePoint, SGLPlotL1Norm)
