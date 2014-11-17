@@ -1,67 +1,40 @@
-PathCalc <- function(data, index, alpha = 0.95, min.frac = 0.05, nlam = 20){
-
-reset <- 10
-step <- 1
-gamma <- 0.8
-
-inner.iter <- 1000
-outer.iter <- 1000
-thresh = 10^(-2)
-outer.thresh = thresh
-  
-  n <- nrow(data$x)
-
+PathCalc <- function(data, index, gamma = 0.05, min.frac = 0.05, nlam = 20){
+ 
   X <- data$x
   resp <- data$y
   n <- nrow(X)
-  p <- ncol(X)
-
-  ## Setting up group lasso stuff ##
-     
-  
-  ## Coming up with other C++ info ##
-    
-  groups <- unique(index)
-  num.groups <- length(groups)
-  range.group.ind <- rep(0,(num.groups+1))
-  for(i in 1:num.groups){
-    range.group.ind[i] <- min(which(index == groups[i])) - 1
-  }
-  range.group.ind[num.groups + 1] <- ncol(X)
-  
-  group.length <- diff(range.group.ind)
-  
+  np <- ncol(X)
+  p <- np/n
+  num.groups <- n
 
 lambda.max <- rep(0,num.groups)
 
-if((alpha != 0)*(alpha != 1)){
+if((gamma != 0)*(gamma != 1)){
 
 for(i in 1:num.groups){
-  ind <- groups[i]
-  X.fit <- X[,which(index == ind)]
-  cors <- t(X.fit) %*% resp
+  X.fit <- X[,((i-1)*p+1):(i*p)]
+  cors <- t(X.fit) %*% resp*2/n
   ord.cors <- sort(abs(cors), decreasing = TRUE)
 
   if(length(ord.cors) > 1){ 
   norms <- rep(0,length(cors)-1)
-
-  lam <- ord.cors/alpha
+  lam <- ord.cors/(1-gamma)
 
 
   for(j in 1:(length(ord.cors)-1)){
     norms[j] <- sqrt(sum((ord.cors[1:j]-ord.cors[j+1])^2))
   }
-  if(norms[1] >= lam[2] * (1-alpha)*sqrt(group.length[i])){
+  if(norms[1] >= lam[2] * gamma){
     our.cors <- ord.cors[1]
-    our.range <- c(ord.cors[2], ord.cors[1])/alpha
+    our.range <- c(ord.cors[2], ord.cors[1])/(1-gamma)
   }else{
-    if(norms[length(ord.cors)-1] <= lam[length(ord.cors)] * (1-alpha)*sqrt(group.length[i])){
+    if(norms[length(ord.cors)-1] <= lam[length(ord.cors)] * gamma){
       our.cors <- ord.cors
-      our.range <- c(0, ord.cors[length(ord.cors)])/alpha
+      our.range <- c(0, ord.cors[length(ord.cors)])/(1-gamma)
     } else{
-      my.ind <- max(which(norms[-length(norms)] <= lam[2:(length(norms))] * (1-alpha) * sqrt(group.length[i]))) + 1
+      my.ind <- max(which(norms[-length(norms)] <= lam[2:(length(norms))] * gamma)) + 1
       our.cors <- ord.cors[1:my.ind]
-      our.range <- c(ord.cors[my.ind+1], ord.cors[my.ind])/alpha
+      our.range <- c(ord.cors[my.ind+1], ord.cors[my.ind])/(1-gamma)
     }
   }
   nn <- length(our.cors)
@@ -69,8 +42,8 @@ for(i in 1:num.groups){
     alpha = 0.500001
   }
   
-  A.term <- nn*alpha^2 - (1 - alpha)^2*group.length[i]
-  B.term <- - 2 * alpha * sum(our.cors)
+  A.term <- nn*(1-gamma)^2 - gamma^2
+  B.term <- - 2 * (1-gamma) * sum(our.cors)
   C.term <- sum(our.cors^2)
 
   lams <- c((-B.term + sqrt(B.term^2 - 4 * A.term * C.term))/(2*A.term), (-B.term - sqrt(B.term^2 - 4 * A.term * C.term))/(2*A.term))
@@ -83,19 +56,18 @@ for(i in 1:num.groups){
      }
 }
 }
-if(alpha == 1){
+if(gamma == 0){
   lambda.max <- abs(t(X) %*% resp)
 }
-if(alpha == 0){
+if(gamma == 1){
   for(i in 1:num.groups){
-  ind <- groups[i]
-  X.fit <- X[,which(index == ind)]
-  cors <- t(X.fit) %*% resp
-  lambda.max[i] <- sqrt(sum(cors^2)) / sqrt(group.length[i])
+  X.fit <- X[,((i-1)*p+1):(i*p)]
+  cors <- t(X.fit) %*% resp * 2/n
+  lambda.max[i] <- sqrt(sum(cors^2))
   }
 }
 max.lam <- max(lambda.max)
 min.lam <- min.frac*max.lam
 lambdas <- exp(seq(log(max.lam),log(min.lam), (log(min.lam) - log(max.lam))/(nlam-1)))
-return(lambdas/nrow(X))
+return(lambdas)
 }
