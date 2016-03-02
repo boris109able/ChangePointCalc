@@ -24,10 +24,10 @@ Maintainer: Bingwen Zhang <tszhang109@gmail.com>
 }
 \references{
 Bingwen Zhang, Jun Geng and Lifeng Lai, Detecting changes in regression models via sparse group lasso,
-http://users.wpi.edu/~bzhang/icassp_v1.pdf
+http://users.wpi.edu/~bzhang/MultipleChangePointsEstimationSGL_fullproof.pdf.
 
 Simon, N., Friedman, J., Hastie T., and Tibshirani, R. (2011) A Sparse-Group Lasso,
-http://www-stat.stanford.edu/~nsimon/SGL.pdf
+http://www-stat.stanford.edu/~nsimon/SGL.pdf.
 }
 
 \keyword{ package }
@@ -36,11 +36,8 @@ http://www-stat.stanford.edu/~nsimon/SGL.pdf
 ChangePoints <- c(101,201)
 n <- 300
 p <- 20
-SData <- SynthesizeData(ChangePoints, sigma1=1, sigma2=0.1, n, p, coefficients=NULL, type="SGL")
-np <- n*p
-index <- ceiling(1:np/p)
-data <- list(x=SData$x,y=SData$y)
-resultSGL <- SGL(data,index,type='linear',alpha=0.20)
+SData <- SynthesizeData(ChangePoints, sigma1=1, sigma2=0.1, n, p, coefficients=NULL)
+resultSGL <- SGLmain(data=SData,gamma=0.90)
 SGLPlotChangePoint(resultSGL, n, p, num=20, breaks=NULL)
 
 SData <- SynthesizeData(ChangePoints, sigma1=1, sigma2=0.1, n, p, coefficients=NULL, type="DP")

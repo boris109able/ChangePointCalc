@@ -1,10 +1,10 @@
-PathCalc <- function(data, index, gamma = 0.05, min.frac = 0.05, nlam = 20){
+PathCalc <- function(data, gamma = 0.90, min.frac = 0.05, nlam = 20){
  
   X <- data$x
   resp <- data$y
   n <- nrow(X)
-  np <- ncol(X)
-  p <- np/n
+  p <- ncol(X)
+  np <- n*p
   num.groups <- n
 
 lambda.max <- rep(0,num.groups)
@@ -12,8 +12,13 @@ lambda.max <- rep(0,num.groups)
 if((gamma != 0)*(gamma != 1)){
 
 for(i in 1:num.groups){
-  X.fit <- X[,((i-1)*p+1):(i*p)]
-  cors <- t(X.fit) %*% resp*2/n
+  if(i<num.groups)
+  {
+    cors <- t(X[i:n,]) %*% resp[i:n]*2/n
+  }
+  else {
+    cors <- t(X[i:n,] %*% t(resp[i:n]))*2/n
+  }
   ord.cors <- sort(abs(cors), decreasing = TRUE)
 
   if(length(ord.cors) > 1){ 
@@ -38,18 +43,20 @@ for(i in 1:num.groups){
     }
   }
   nn <- length(our.cors)
-  if(alpha == 0.5){
-    alpha = 0.500001
+  if(gamma == 0.5){
+    gamma = 0.500001
   }
   
   A.term <- nn*(1-gamma)^2 - gamma^2
   B.term <- - 2 * (1-gamma) * sum(our.cors)
   C.term <- sum(our.cors^2)
-
   lams <- c((-B.term + sqrt(B.term^2 - 4 * A.term * C.term))/(2*A.term), (-B.term - sqrt(B.term^2 - 4 * A.term * C.term))/(2*A.term))
-  
-  
-  lambda.max[i] <- min(subset(lams, lams >= our.range[1] & lams <= our.range[2]))
+  if((lams[1] >= our.range[1] && lams[1] <= our.range[2]) || (lams[2] >= our.range[1] && lams[2] <= our.range[2])) {
+    lambda.max[i] <- min(subset(lams, lams >= our.range[1] & lams <= our.range[2]))
+  }
+  else {
+    lambda.max[i] = our.range[1]
+  }
   }
      if(length(ord.cors) == 1){
        lambda.max[i] <- ord.cors
@@ -61,8 +68,11 @@ if(gamma == 0){
 }
 if(gamma == 1){
   for(i in 1:num.groups){
-  X.fit <- X[,((i-1)*p+1):(i*p)]
-  cors <- t(X.fit) %*% resp * 2/n
+    if (i<num.groups) {
+    cors <- t(X[i:n,]) %*% resp[i:n] * 2/n}
+    else {
+      cors <- t(X[i:n,] %*% t(resp[i:n]))*2/n
+    }
   lambda.max[i] <- sqrt(sum(cors^2))
   }
 }

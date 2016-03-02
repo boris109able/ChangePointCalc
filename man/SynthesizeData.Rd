@@ -10,7 +10,7 @@ Generate synthesized data used by SGL approach
 Generate synthesized data used by SGL approach
 }
 \usage{
-SynthesizeData(ChangePoints, sigma1, sigma2, n = 1000, p = 20, coefficients = NULL)
+SynthesizeData(ChangePoints, sigma1, sigma2, n = 1000, p = 20, s = 4, coefficients = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -33,6 +33,10 @@ total number of data generated
   \item{p}{
 %%     ~~Describe \code{p} here~~
 dimension of data generated
+}
+  \item{s}{
+%%     ~~Describe \code{p} here~~
+sparsity level of coefficients
 }
   \item{coefficients}{
 %%     ~~Describe \code{coefficients} here~~
@@ -73,7 +77,7 @@ Bingwen Zhang
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (ChangePoints, sigma1, sigma2, n = 1000, p = 20, coefficients = NULL) 
+function (ChangePoints, sigma1, sigma2, n = 1000, p = 20, s = 4, coefficients = NULL) 
 {
     np <- n * p
     KReal <- length(ChangePoints)
@@ -86,13 +90,13 @@ function (ChangePoints, sigma1, sigma2, n = 1000, p = 20, coefficients = NULL)
         }
     }
     if (is.null(coefficients)) {
-        coefficients <- matrix(NA, KReal + 1, p)
+        coefficients <- matrix(0, KReal + 1, p)
         for (i in 1:(KReal + 1)) {
             if (i\%\%2 == 1) {
-                coefficients[i, ] <- 2 * rep.int(1, p)
+                coefficients[i, 1:s] <- 2 * rep.int(1, s)
             }
             else {
-                coefficients[i, ] <- -2 * rep.int(1, p)
+                coefficients[i, 1:s] <- -2 * rep.int(1, s)
             }
         }
     }
